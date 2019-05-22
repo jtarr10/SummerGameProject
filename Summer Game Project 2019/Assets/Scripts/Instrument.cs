@@ -19,16 +19,32 @@ public class Instrument : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// This function will play the instrument in a loop
+    /// </summary>
     void Play()
     {
         isPlaying = true;
         output.PlayOneShot(Resources.Load<AudioClip>(soundName));
     }
 
+    /// <summary>
+    /// This function will stop playback of the sound loop
+    /// </summary>
     void Stop()
     {
         isPlaying = false;
         output.Stop();
+    }
+
+
+    /// <summary>
+    /// This will set the volume of the instrument to level
+    /// </summary>
+    /// <param name="level">the number that the audiosource volume will be set to</param>
+    void setVolume(float level)
+    {
+
     }
 
 
