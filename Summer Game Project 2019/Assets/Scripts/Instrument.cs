@@ -17,7 +17,7 @@ public class Instrument : MonoBehaviour
     AudioSource output;
 
 
-    public int counter = 0; //delete me
+    int counter = 0; //delete me
 
     // Start is called before the first frame update
     void Start()
@@ -35,7 +35,7 @@ public class Instrument : MonoBehaviour
         {
             isPlaying = true;
             pitchModifier = key.freq;
-            output.PlayOneShot(Resources.Load<AudioClip>(soundName));
+            output.PlayOneShot(Resources.Load<AudioClip>(soundPath));
         }
     }
 
@@ -71,6 +71,7 @@ public class Instrument : MonoBehaviour
     void Update()
     {
         output.pitch = pitchModifier;
+
         //Test Code: PLEASE DELETE WHEN DONE
         if(Input.GetKeyUp(KeyCode.Space) && isPlaying == false)
         {
