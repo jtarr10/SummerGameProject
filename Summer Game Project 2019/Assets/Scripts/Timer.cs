@@ -31,7 +31,7 @@ public class Timer : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if(counter > 0.0f && isCounting == true)
         {
@@ -40,9 +40,9 @@ public class Timer : MonoBehaviour
         }
         else if (counter <= 0.0f && isCounting == true)
         {
+            Debug.Log("Timer Finished");
             isCounting = false;
             isDone = FinishCount();
-            Debug.Log("Timer Finished");
         }
     }
 

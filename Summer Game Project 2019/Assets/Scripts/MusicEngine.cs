@@ -11,7 +11,6 @@ public struct Note
     public float duration;
     public float freq;
     public int bpm;
-    public bool wasPlayed;
     Dictionary<string, float> freqPairs;
     Dictionary<string, float> typeDurations;
 
@@ -26,7 +25,6 @@ public struct Note
     /// <param name="rate">Pass an int that indicates the bpm of the note to be played</param>
     public Note(string noteValue, string noteType, int rate)
     {
-        wasPlayed = false;
         value = noteValue;
         type = noteType;
         bpm = rate;
@@ -109,7 +107,7 @@ public class MusicEngine : MonoBehaviour
 {
     public int bpm;
     public Note key;
-    Note[] sequence;
+    Queue<Note> sequence;
     public Instrument lead;
     bool playingSequence;
 
@@ -136,7 +134,7 @@ public class MusicEngine : MonoBehaviour
         lead = GameObject.Find("Lead Instrument").GetComponent<Instrument>();
 
         //creating a test sequence: Yankee Doodle     DELETE ME
-        sequence = new Note[]
+        Note[] temp = new Note[]
         {
             new Note("C2", "1/4", 120),
             new Note("C2", "1/4", 120),
@@ -168,11 +166,13 @@ public class MusicEngine : MonoBehaviour
             new Note("C2", "1/2", 120)
         };
 
+        sequence = new Queue<Note>(temp);
+
         PlaySequence(sequence);  //DELETE ME
     }
 
 
-    public void PlaySequence(Note[] notes)
+    public void PlaySequence(Queue<Note> notes)
     {
         sequence = notes;
 
@@ -185,20 +185,17 @@ public class MusicEngine : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        //playing the sequence queue
         if(playingSequence && (lead.isPlaying != true))
         {
-            for(int x = 0; x < sequence.Length; x++)
-            {
-                if(sequence[x].wasPlayed != true)
-                {
-                    lead.Play(sequence[x]);
-                    sequence[x].wasPlayed = true;
-                    break;
-                }
-            }
-            if(sequence[sequence.Length - 1].wasPlayed)
+            if(sequence.Count == 0)
             {
                 playingSequence = false;
+            }
+            else
+            {
+                lead.Play(sequence.Dequeue());
             }
         }
 

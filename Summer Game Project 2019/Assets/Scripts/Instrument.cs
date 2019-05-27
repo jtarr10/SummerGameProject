@@ -11,7 +11,6 @@ public class Instrument : MonoBehaviour
     string[] noteValues = new string[] { "A1", "A1#", "B1", "C1", "C1#", "D1", "D1#", "E1", "F1", "F1#", "G1", "G1#", "A2", "A2#", "B2", "C2", "C2#", "D2", "D2#", "E2", "F2", "F2#", "G2", "G2#", "A3", "A3#", "B3", "C3" };
     public string soundName = "Piano";
     string soundPath;
-    float volume = 1.0f;
     public float pitchModifier = 1.0f;
     public bool isPlaying = false;
     AudioSource output;
@@ -72,7 +71,7 @@ public class Instrument : MonoBehaviour
 
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         output.pitch = pitchModifier;
 
