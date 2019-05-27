@@ -42,6 +42,7 @@ public class Timer : MonoBehaviour
         {
             isCounting = false;
             isDone = FinishCount();
+            Debug.Log("Timer Finished");
         }
     }
 
@@ -49,7 +50,7 @@ public class Timer : MonoBehaviour
     /// This function will return a boolean indicating whether or not the Timer is finished or not. If the timer is done, the component will be destroyed.
     /// </summary>
     /// <returns>true if finished and false if still counting</returns>
-    bool FinishCount()
+    public bool FinishCount()
     {
         if (counter > 0.0f)
         {
@@ -57,8 +58,6 @@ public class Timer : MonoBehaviour
         }
         else
         {
-            Debug.Log("Timer Finished");
-            Destroy(GetComponent<Timer>());
             return true;
         }
     }

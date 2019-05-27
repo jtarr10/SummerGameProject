@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 867642567684646722}
   m_Layer: 0
   m_Name: Lead Instrument
-  m_TagString: Untagged
+  m_TagString: Intrument
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -141,5 +141,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c6d2951182f1b34bbc3dceb2e072c50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  soundName: Piano
   pitchModifier: 1
-  counter: 10

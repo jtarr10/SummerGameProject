@@ -13,31 +13,35 @@ public class Instrument : MonoBehaviour
     string soundPath;
     float volume = 1.0f;
     public float pitchModifier = 1.0f;
-    bool isPlaying = false;
+    public bool isPlaying = false;
     AudioSource output;
+    protected Timer timer;
 
 
-    int counter = 0; //delete me
+
 
     // Start is called before the first frame update
     void Start()
     {
         output = gameObject.GetComponent<AudioSource>();
         soundPath = "Audio\\" + soundName;
+        timer = gameObject.AddComponent<Timer>();
     }
 
     /// <summary>
-    /// This function will play the instrument in a loop on the given note
+    /// This function will play the given note on the instrument
     /// </summary>
-    void Play(Note key)
+    public void Play(Note key)
     {
         if (key.value != "rest")
         {
             isPlaying = true;
             pitchModifier = key.freq;
             output.PlayOneShot(Resources.Load<AudioClip>(soundPath));
+            timer.StartTimer(key.duration);
         }
     }
+
 
     /// <summary>
     /// This function will stop playback of the sound loop
@@ -72,31 +76,11 @@ public class Instrument : MonoBehaviour
     {
         output.pitch = pitchModifier;
 
-        //Test Code: PLEASE DELETE WHEN DONE
-        if(Input.GetKeyUp(KeyCode.Space) && isPlaying == false)
-        {
-            Note p = new Note(noteValues[counter], 1.0f);
-            Play(p);
-        }
-        else if(Input.GetKeyUp(KeyCode.Space) && isPlaying == true)
+
+        //finishing note when the timer is done
+        if(timer.FinishCount())
         {
             Stop();
         }
-
-        if(Input.GetKeyUp(KeyCode.W))
-        {
-            counter++;
-        }
-        if(Input.GetKeyUp(KeyCode.S))
-        {
-            counter--;
-        }
-        if(Input.GetKeyUp(KeyCode.X))
-        {
-            counter = 0;
-            Timer time = gameObject.AddComponent<Timer>();
-            time.StartTimer(5f);
-        }
-
     }
 }
