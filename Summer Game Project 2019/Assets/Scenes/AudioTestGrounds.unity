@@ -506,6 +506,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lead Instrument
       objectReference: {fileID: 0}
+    - target: {fileID: 867642567684646721, guid: 7422de3fff691934e82d18e773c6af41,
+        type: 3}
+      propertyPath: m_TagString
+      value: Instrument
+      objectReference: {fileID: 0}
     - target: {fileID: 867642567684646732, guid: 7422de3fff691934e82d18e773c6af41,
         type: 3}
       propertyPath: m_LocalPosition.x
