@@ -39,6 +39,11 @@ public class Instrument : MonoBehaviour
             output.PlayOneShot(Resources.Load<AudioClip>(soundPath));
             timer.StartTimer(key.duration);
         }
+        else
+        {
+            isPlaying = true;
+            timer.StartTimer(key.duration);
+        }
     }
 
 
@@ -71,7 +76,7 @@ public class Instrument : MonoBehaviour
 
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         output.pitch = pitchModifier;
 
