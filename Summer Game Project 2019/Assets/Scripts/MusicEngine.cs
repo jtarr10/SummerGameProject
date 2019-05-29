@@ -100,16 +100,68 @@ public struct Note
 }
 
 
+public struct Scale
+{
+    public string root;
+    public List<Note> scale;
+    string[] noteValues;
+    Dictionary<string, string> stepPatterns;
 
+    /// <summary>
+    /// A scale generates a list of notes that form an octave of a specified scale type based from the root. 
+    /// Scale.scale is the list of notes
+    /// </summary>
+    /// <param name="rootNote">This is the root note of the scale. The highest note value that will work is C2. </param>
+    /// <param name="type">The scale can be either major or minor. Pass one of the two strings to the type parameter.</param>
+    public Scale(string rootNote, string type)
+    {
+        root = rootNote;
+
+        //setting up the note values of the two octaves of chromatic scale
+        noteValues = new string[] { "C1", "C1#", "D1", "D1#", "E1", "F1", "F1#", "G1", "G1#", "A2", "A2#", "B2", "C2", "C2#", "D2", "D2#", "E2", "F2", "F2#", "G2", "G2#", "A3", "A3#", "B3", "C3" };
+
+        //setting up step patterns
+        stepPatterns = new Dictionary<string, string>
+        {
+            ["major"] = "WWHWWWH",
+            ["minor"] = "WHWWHWW"
+        };
+
+        scale = new List<Note>();
+        scale.Add(new Note(root, "1/4", 120));
+
+        var notePointer = System.Array.IndexOf(noteValues, root);
+        foreach(char letter in stepPatterns[type])
+        {
+            if(letter == 'W')
+            {
+                notePointer += 2;
+            }
+            else
+            {
+                notePointer += 1;
+            }
+
+            scale.Add(new Note(noteValues[notePointer], "1/4", 120));
+        }
+    }
+
+
+}
 
 
 public class MusicEngine : MonoBehaviour
 {
     public int bpm;
-    public Note key;
+    public Note root;
     Queue<Note> sequence;
     public Instrument lead;
     bool playingSequence;
+    string[] possibleScales;
+
+    int counter; //DELETE ME
+    string[] types = new string[] { "major", "minor" };
+    bool isMajor = true;
 
     //Singleton Setup
     public static MusicEngine Instance { get; private set; }
@@ -133,45 +185,50 @@ public class MusicEngine : MonoBehaviour
         playingSequence = false;
         lead = GameObject.Find("Lead Instrument").GetComponent<Instrument>();
 
-        //creating a test sequence: Yankee Doodle     DELETE ME
-        Note[] temp = new Note[]
-        {
-            new Note("C2", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("D2", "1/4", 120),
-            new Note("E2", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("E2", "1/4", 120),
-            new Note("D2", "1/4", 120),
-            new Note("G1", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("D2", "1/4", 120),
-            new Note("E2", "1/4", 120),
-            new Note("C2", "1/2", 120),
-            new Note("B2", "1/2", 120),
-            new Note("C2", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("D2", "1/4", 120),
-            new Note("E2", "1/4", 120),
-            new Note("F2", "1/4", 120),
-            new Note("E2", "1/4", 120),
-            new Note("D2", "1/4", 120),
-            new Note("C2", "1/4", 120),
-            new Note("B2", "1/4", 120),
-            new Note("G1", "1/4", 120),
-            new Note("A2", "1/4", 120),
-            new Note("B2", "1/4", 120),
-            new Note("C2", "1/2", 120),
-            new Note("C2", "1/2", 120)
-        };
+        possibleScales = new string[] { "C1", "C1#", "D1", "D1#", "E1", "F1", "F1#", "G1", "G1#", "A2", "A2#", "B2", "C2" };
+        counter = 0; //DELETE ME
+        
 
-        sequence = new Queue<Note>(temp);
+        ////test sequence: Yankee Doodle     DELETE ME
+        //Note[] temp = new Note[]
+        //{
+        //    new Note("C2", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("D2", "1/4", 120),
+        //    new Note("E2", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("E2", "1/4", 120),
+        //    new Note("D2", "1/4", 120),
+        //    new Note("G1", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("D2", "1/4", 120),
+        //    new Note("E2", "1/4", 120),
+        //    new Note("C2", "1/2", 120),
+        //    new Note("B2", "1/2", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("D2", "1/4", 120),
+        //    new Note("E2", "1/4", 120),
+        //    new Note("F2", "1/4", 120),
+        //    new Note("E2", "1/4", 120),
+        //    new Note("D2", "1/4", 120),
+        //    new Note("C2", "1/4", 120),
+        //    new Note("B2", "1/4", 120),
+        //    new Note("G1", "1/4", 120),
+        //    new Note("A2", "1/4", 120),
+        //    new Note("B2", "1/4", 120),
+        //    new Note("C2", "1/2", 120),
+        //    new Note("C2", "1/2", 120)
+        //};
 
-        PlaySequence(sequence);  //DELETE ME
     }
 
 
+    /// <summary>
+    /// This will play a sequence of notes on the lead instrument. 
+    /// </summary>
+    /// <param name="notes">Pass a queue of notes to be played</param>
     public void PlaySequence(Queue<Note> notes)
     {
         sequence = notes;
@@ -181,6 +238,19 @@ public class MusicEngine : MonoBehaviour
             playingSequence = true;
         }
     }
+
+
+    /// <summary>
+    /// Use this to set the key of the melody to be played
+    /// </summary>
+    /// <param name="rootValue">Please see Note definition for possible note values.</param>
+    public void SetKey(string rootValue)
+    {
+        root = new Note(rootValue, "1/4", 120);
+    }
+
+
+
 
     // Update is called once per frame
     void Update()
@@ -197,6 +267,31 @@ public class MusicEngine : MonoBehaviour
             {
                 lead.Play(sequence.Dequeue());
             }
+        }
+
+        //Scale Test Code: DELETE
+        if(Input.GetKeyUp(KeyCode.W))
+        {
+            counter = System.Math.Min(counter + 1, possibleScales.Length - 1);
+        }
+        if(Input.GetKeyUp(KeyCode.S))
+        {
+            counter = System.Math.Max(counter - 1, 0);
+        }
+        if(Input.GetKeyUp(KeyCode.Space))
+        {
+            var scale = new Scale(possibleScales[counter], isMajor ? types[0] : types[1]).scale.ToArray();
+            
+
+            PlaySequence(new Queue<Note>(scale));
+        }
+
+        if(Input.GetKeyUp(KeyCode.X))
+        {
+            if (isMajor)
+                isMajor = false;
+            else
+                isMajor = true;
         }
 
 
