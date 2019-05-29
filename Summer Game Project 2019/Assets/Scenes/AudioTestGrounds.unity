@@ -503,15 +503,15 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Audio Instrument Test Controls:
+  m_Text: 'Melody Generator Test Controls:
 
     W - go up in key 1/2 step
 
     S - go down in key 1/2 step
 
-    X - toggle between major and minor scales
+    SPACE - Generate and Play 8 beat melody
 
-    SPACE - Generate and Play Scale'
+    Edit Probability parameters on the MusicEngine'
 --- !u!222 &940610900
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -634,6 +634,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bpm: 0
   lead: {fileID: 0}
+  disjunctivity: 1
+  probabilityOfRest: 0
 --- !u!4 &2117891291
 Transform:
   m_ObjectHideFlags: 0

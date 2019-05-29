@@ -126,10 +126,10 @@ public struct Scale
     Dictionary<string, string> stepPatterns;
 
     /// <summary>
-    /// A scale generates a list of notes that form an octave of a specified scale type based from the root. 
+    /// A scale generates a list of notes that form up to two octaves of a specified scale type based from the root. 
     /// Scale.scale is the list of notes
     /// </summary>
-    /// <param name="rootNote">This is the root note of the scale. The highest note value that will work is C2. </param>
+    /// <param name="rootNote">This is the root note of the scale. </param>
     /// <param name="type">The scale can be either major or minor. Pass one of the two strings to the type parameter.</param>
     public Scale(string rootNote, string type)
     {
@@ -141,8 +141,8 @@ public struct Scale
         //setting up step patterns
         stepPatterns = new Dictionary<string, string>
         {
-            ["major"] = "WWHWWWH",
-            ["minor"] = "WHWWHWW"
+            ["major"] = "WWHWWWHWWHWWWH",
+            ["minor"] = "WHWWHWWWHWWHWW"
         };
 
         scale = new List<Note>();
@@ -151,14 +151,17 @@ public struct Scale
         var notePointer = System.Array.IndexOf(noteValues, root);
         foreach(char letter in stepPatterns[type])
         {
-            if(letter == 'W')
+
+            if (letter == 'W' && notePointer < noteValues.Length - 2)
             {
                 notePointer += 2;
             }
-            else
+            else if (letter == 'H' && notePointer < noteValues.Length - 1)
             {
                 notePointer += 1;
             }
+            else
+                break;
 
             scale.Add(new Note(noteValues[notePointer], "1/4", 120));
         }
@@ -173,14 +176,13 @@ public struct Melody
     public string root;
     public List<Note> melody;
     public int bpm;
-    Scale key;
+    Note[] key;
     float length;
 
 
     //Probability attributes
     float restProb;
     float disjunctivity;
-    float typeVar;
     
 
     /// <summary>
@@ -188,17 +190,16 @@ public struct Melody
     /// This melody is produced as a list of notes called Melody.melody.
     /// </summary>
     /// <param name="rootKey">The root note of the key that the melody will be in.</param>
-    /// <param name="probabilityOfRest">Probability that rests will be used in place of notes.</param>
+    /// <param name="probabilityOfRest">Probability that rests will be used in place of notes. (0 to 1)</param>
     /// <param name="disjunct">A parameter that controls how disjunct the melody will be. (values > 1 will increase the intervals)</param>
     /// <param name="typeVariation">A parameter that controls how varied the note durations will be. </param>
     /// <param name="rate">This is the bpm of the desired melody.</param>
     /// <param name="lengthInBeats">This is the length of the desired melody in beats.</param>
-    public Melody(string rootKey, float probabilityOfRest, float disjunct, float typeVariation, int rate, int lengthInBeats)
+    public Melody(string rootKey, float probabilityOfRest, float disjunct, int rate, int lengthInBeats)
     {
         //probability attributes
         restProb = probabilityOfRest;
         disjunctivity = System.Math.Max(0, disjunct);
-        typeVar = System.Math.Max(0, typeVariation);
 
         //melody attributes
         melody = new List<Note>();
@@ -207,17 +208,17 @@ public struct Melody
         length = (60.0f / (float)bpm) * (float)lengthInBeats;
 
         //setting up the key
-        key = new Scale(root, "major");
+        key = new Scale(root, "major").scale.ToArray();
 
-        string[] types = new string[] { "1/32", "1/16", "1/8", "1/4", "dotted-1/4", "1/2" };
+        string[] types = new string[] {"1/16", "1/8", "1/4", "1/2" };
         int typeIndex = (int)Random.Range(0, types.Length - 1);
-        int noteIndex = (int)Random.Range(0, key.scale.Count - 1);
+        int noteIndex = (int)Random.Range(0, key.Length - 1);
         
 
         float durTotal = 0;
 
         //This variable houses the next randomly generated note to be added to the melody
-        Note next = new Note(key.scale[noteIndex].value, types[typeIndex], bpm);
+        Note next = new Note(key[noteIndex].value, types[typeIndex], bpm);
         
 
         while(durTotal < length)
@@ -226,32 +227,55 @@ public struct Melody
             melody.Add(next);
             durTotal += next.typeDurations[types[typeIndex]];
 
-            noteIndex = HelperFunctions.LimitToRange(noteIndex + (int)Random.Range(-2.0f * disjunctivity, 2.0f * disjunctivity), 0, key.scale.Count - 1);
-            typeIndex = HelperFunctions.LimitToRange(typeIndex + (int)Random.Range(-2.0f * typeVar, 2.0f * typeVar), 0, types.Length - 1);
             
-            //catching the end of the melody with the tonic
-            if ((length - durTotal) == next.typeDurations["1/4"])
+            //attempt to approach the final tonic when the pattern is nearing the end
+            if(length - durTotal < next.typeDurations["1/2"])
             {
-                typeIndex = 3;
-                noteIndex = 0;
+                typeIndex = Random.Range(0, types.Length - 1);
+                noteIndex = HelperFunctions.LimitToRange(noteIndex - 1, 0, key.Length - 1);
             }
-            else if ((length - durTotal) == next.typeDurations["1/8"])
+            else
             {
-                typeIndex = 2;
-                noteIndex = 0;
-            }
-            else if((length - durTotal) == next.typeDurations["1/16"])
+                noteIndex = HelperFunctions.LimitToRange(noteIndex + (int)Random.Range(-1.0f * disjunctivity, 1.0f * disjunctivity), 0, key.Length - 1);
+                typeIndex = Random.Range(0, types.Length - 1);
+                
+                //dynamic adaptation of probability 
+                if (next.value == key[noteIndex].value)
+                    disjunctivity += 0.5f;
+                else
+                    disjunctivity -= 0.5f;
+
+            }            
+
+            //dealing with rest probability
+            var isRest = Random.Range(1f, 100f) <= (restProb * 100f);
+            string[] restType = new string[] { "1/8", "1/4" };
+
+            //catching the end of the pattern
+            if (durTotal < next.typeDurations["1/4"])
             {
-                typeIndex = 1;
-                noteIndex = 0;
-            }
-            else if((length - durTotal) == next.typeDurations["1/32"])
-            {
-                typeIndex = 0;
-                noteIndex = 0;
+                if (durTotal == next.typeDurations["1/4"])
+                    typeIndex = 2;
+                else if (durTotal == next.typeDurations["1/8"])
+                    typeIndex = 1;
+                else
+                {
+                    typeIndex = 0;
+                    isRest = true;
+                }
             }
 
-            next = new Note(key.scale[noteIndex].value, types[typeIndex], bpm);
+            //setting up the next note to be added
+            if (isRest)
+            {
+                next = new Note("rest", restType[(int)Random.Range(0, 1)], bpm);
+            }
+            else
+            {
+                next = new Note(key[noteIndex].value, types[typeIndex], bpm);
+            }
+
+            
 
 
         }
@@ -271,6 +295,8 @@ public class MusicEngine : MonoBehaviour
     string[] possibleScales;
 
     int counter; //DELETE ME
+    public float disjunctivity;
+    public float probabilityOfRest;
 
     //Singleton Setup
     public static MusicEngine Instance { get; private set; }
@@ -295,8 +321,10 @@ public class MusicEngine : MonoBehaviour
         lead = GameObject.Find("Lead Instrument").GetComponent<Instrument>();
 
         possibleScales = new string[] { "C1", "C1#", "D1", "D1#", "E1", "F1", "F1#", "G1", "G1#", "A2", "A2#", "B2", "C2" };
+
         counter = 0; //DELETE ME
-        
+        disjunctivity = 1.5f;
+        probabilityOfRest = 0;
 
 
     }
@@ -357,7 +385,7 @@ public class MusicEngine : MonoBehaviour
         }
         if(Input.GetKeyUp(KeyCode.Space))
         {
-            var melody = new Melody(possibleScales[counter], 0, 1, 1, 120, 8).melody.ToArray();
+            var melody = new Melody(possibleScales[counter], probabilityOfRest, disjunctivity, 120, 8).melody.ToArray();
             
 
             PlaySequence(new Queue<Note>(melody));
