@@ -3,6 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
+public static class HelperFunctions
+{
+    /// <summary>
+    /// This function limits a value within a minimum and maximum value.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="inclusiveMinimum"></param>
+    /// <param name="inclusiveMaximum"></param>
+    /// <returns></returns>
+    public static int LimitToRange(this int value, int inclusiveMinimum, int inclusiveMaximum)
+    {
+        if (value < inclusiveMinimum) { return inclusiveMinimum; }
+        if (value > inclusiveMaximum) { return inclusiveMaximum; }
+        return value;
+    }
+}
+
 
 public struct Note
 {
@@ -12,13 +29,13 @@ public struct Note
     public float freq;
     public int bpm;
     Dictionary<string, float> freqPairs;
-    Dictionary<string, float> typeDurations;
+    public Dictionary<string, float> typeDurations;
 
     /// <summary>
     /// This will initialize a note object with the given note value and type. The available note values are as follows:
     /// A1, A1#, B1, C1, C1#, D1, D1#, E1, F1, F1#, G1, G1#, A2, A2#, B2, C2, C2#, D2, D2#, E2, F2, F2#, G2, G2#, A3, A3#, B3, C3. If no note should be played,
     /// the user can pass the word "rest" as the noteValue. 
-    /// The possible note types are as follows: 1/32, 1/16, 1/8, 1/4, 1/2, dotted-half, whole, 2-whole. The 1/4 note gets the beat as by convention of 4/4 time.
+    /// The possible note types are as follows: 1/32, 1/16, 1/8, 1/4, dotted-1/4, 1/2, dotted-half, whole, 2-whole. The 1/4 note gets the beat as by convention of 4/4 time.
     /// </summary>
     /// <param name="noteValue">the note value string of this note object</param>
     /// <param name="noteType">Pass a string descriptor of the note type.</param>
@@ -81,6 +98,7 @@ public struct Note
             ["1/16"] = beatLength / 4.0f,
             ["1/8"] = beatLength / 2.0f,
             ["1/4"] = beatLength,
+            ["dotted-1/4"] = beatLength * 1.5f,
             ["1/2"] = beatLength * 2.0f,
             ["dotted-half"] = beatLength * 3.0f,
             ["whole"] = beatLength * 4.0f,
@@ -150,6 +168,99 @@ public struct Scale
 }
 
 
+public struct Melody
+{
+    public string root;
+    public List<Note> melody;
+    public int bpm;
+    Scale key;
+    float length;
+
+
+    //Probability attributes
+    float restProb;
+    float disjunctivity;
+    float typeVar;
+    
+
+    /// <summary>
+    /// This struct will generate a string of notes that total to the given length, in the given key, following with given probabilities, and with the given bpm.
+    /// This melody is produced as a list of notes called Melody.melody.
+    /// </summary>
+    /// <param name="rootKey">The root note of the key that the melody will be in.</param>
+    /// <param name="probabilityOfRest">Probability that rests will be used in place of notes.</param>
+    /// <param name="disjunct">A parameter that controls how disjunct the melody will be. (values > 1 will increase the intervals)</param>
+    /// <param name="typeVariation">A parameter that controls how varied the note durations will be. </param>
+    /// <param name="rate">This is the bpm of the desired melody.</param>
+    /// <param name="lengthInBeats">This is the length of the desired melody in beats.</param>
+    public Melody(string rootKey, float probabilityOfRest, float disjunct, float typeVariation, int rate, int lengthInBeats)
+    {
+        //probability attributes
+        restProb = probabilityOfRest;
+        disjunctivity = System.Math.Max(0, disjunct);
+        typeVar = System.Math.Max(0, typeVariation);
+
+        //melody attributes
+        melody = new List<Note>();
+        root = rootKey;
+        bpm = rate;
+        length = (60.0f / (float)bpm) * (float)lengthInBeats;
+
+        //setting up the key
+        key = new Scale(root, "major");
+
+        string[] types = new string[] { "1/32", "1/16", "1/8", "1/4", "dotted-1/4", "1/2" };
+        int typeIndex = (int)Random.Range(0, types.Length - 1);
+        int noteIndex = (int)Random.Range(0, key.scale.Count - 1);
+        
+
+        float durTotal = 0;
+
+        //This variable houses the next randomly generated note to be added to the melody
+        Note next = new Note(key.scale[noteIndex].value, types[typeIndex], bpm);
+        
+
+        while(durTotal < length)
+        {
+            //add the note and update the duration total
+            melody.Add(next);
+            durTotal += next.typeDurations[types[typeIndex]];
+
+            noteIndex = HelperFunctions.LimitToRange(noteIndex + (int)Random.Range(-2.0f * disjunctivity, 2.0f * disjunctivity), 0, key.scale.Count - 1);
+            typeIndex = HelperFunctions.LimitToRange(typeIndex + (int)Random.Range(-2.0f * typeVar, 2.0f * typeVar), 0, types.Length - 1);
+            
+            //catching the end of the melody with the tonic
+            if ((length - durTotal) == next.typeDurations["1/4"])
+            {
+                typeIndex = 3;
+                noteIndex = 0;
+            }
+            else if ((length - durTotal) == next.typeDurations["1/8"])
+            {
+                typeIndex = 2;
+                noteIndex = 0;
+            }
+            else if((length - durTotal) == next.typeDurations["1/16"])
+            {
+                typeIndex = 1;
+                noteIndex = 0;
+            }
+            else if((length - durTotal) == next.typeDurations["1/32"])
+            {
+                typeIndex = 0;
+                noteIndex = 0;
+            }
+
+            next = new Note(key.scale[noteIndex].value, types[typeIndex], bpm);
+
+
+        }
+
+
+    }
+
+}
+
 public class MusicEngine : MonoBehaviour
 {
     public int bpm;
@@ -160,8 +271,6 @@ public class MusicEngine : MonoBehaviour
     string[] possibleScales;
 
     int counter; //DELETE ME
-    string[] types = new string[] { "major", "minor" };
-    bool isMajor = true;
 
     //Singleton Setup
     public static MusicEngine Instance { get; private set; }
@@ -189,38 +298,6 @@ public class MusicEngine : MonoBehaviour
         counter = 0; //DELETE ME
         
 
-        ////test sequence: Yankee Doodle     DELETE ME
-        //Note[] temp = new Note[]
-        //{
-        //    new Note("C2", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("D2", "1/4", 120),
-        //    new Note("E2", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("E2", "1/4", 120),
-        //    new Note("D2", "1/4", 120),
-        //    new Note("G1", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("D2", "1/4", 120),
-        //    new Note("E2", "1/4", 120),
-        //    new Note("C2", "1/2", 120),
-        //    new Note("B2", "1/2", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("D2", "1/4", 120),
-        //    new Note("E2", "1/4", 120),
-        //    new Note("F2", "1/4", 120),
-        //    new Note("E2", "1/4", 120),
-        //    new Note("D2", "1/4", 120),
-        //    new Note("C2", "1/4", 120),
-        //    new Note("B2", "1/4", 120),
-        //    new Note("G1", "1/4", 120),
-        //    new Note("A2", "1/4", 120),
-        //    new Note("B2", "1/4", 120),
-        //    new Note("C2", "1/2", 120),
-        //    new Note("C2", "1/2", 120)
-        //};
 
     }
 
@@ -280,18 +357,10 @@ public class MusicEngine : MonoBehaviour
         }
         if(Input.GetKeyUp(KeyCode.Space))
         {
-            var scale = new Scale(possibleScales[counter], isMajor ? types[0] : types[1]).scale.ToArray();
+            var melody = new Melody(possibleScales[counter], 0, 1, 1, 120, 8).melody.ToArray();
             
 
-            PlaySequence(new Queue<Note>(scale));
-        }
-
-        if(Input.GetKeyUp(KeyCode.X))
-        {
-            if (isMajor)
-                isMajor = false;
-            else
-                isMajor = true;
+            PlaySequence(new Queue<Note>(melody));
         }
 
 
