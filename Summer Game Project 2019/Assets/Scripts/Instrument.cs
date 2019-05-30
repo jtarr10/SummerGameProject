@@ -27,6 +27,21 @@ public class Instrument : MonoBehaviour
         timer = gameObject.AddComponent<Timer>();
     }
 
+
+    /// <summary>
+    /// Plays the current soundName file until it is finished
+    /// </summary>
+    public void Play()
+    {
+        SetVolume(1f);
+        output.PlayOneShot(Resources.Load<AudioClip>(soundPath));
+    }
+
+
+
+
+
+
     /// <summary>
     /// This function will play the given note on the instrument
     /// </summary>
@@ -61,7 +76,7 @@ public class Instrument : MonoBehaviour
     /// This will set the volume of the instrument to level
     /// </summary>
     /// <param name="level">the level the volume will be set to (from 0 to 1)</param>
-    void setVolume(float level)
+    void SetVolume(float level)
     {
         if(level <= 1.0f && level >= 0.0f)
         {
@@ -74,19 +89,29 @@ public class Instrument : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// This sets the instrument sound by passing the filename without extension.
+    /// </summary>
+    /// <param name="fileName">The name of the audio file in the resources audio folder without the file extension.</param>
+    public void SetSound(string fileName)
+    {
+        soundPath = "Audio\\" + fileName;
+        soundName = fileName;
+    }
+
 
     // Update is called once per frame
     void Update()
     {
         output.pitch = pitchModifier;
-        if(!timer.FinishCount())
-            setVolume((timer.count) / timer.duration);
 
-
-        //finishing note when the timer is done
-        if(timer.FinishCount())
-        {
+        //Envelope Volume Control
+        if (!timer.FinishCount())
+            SetVolume((timer.count) / timer.duration);
+        else if(isPlaying)
             Stop();
-        }
+
+
+        
     }
 }

@@ -295,18 +295,89 @@ public struct RandomMelody
 
 }
 
+
+public struct Spell
+{
+    Dictionary<string, string[]> castingComponents, songComponents;
+    string genre;
+    GameObject baseSpellObj, upgSpellObj, rightPermutationObj, leftPermutationObj;
+    public int level;
+    public string alignment;
+
+    /// <summary>
+    /// This will instantiate a Spell object with the following parameters.
+    /// </summary>
+    /// <param name="leadName">The name of the lead sound file.</param>
+    /// <param name="bassName">The name of the bass sound file.</param>
+    /// <param name="drumName">The name of the drum sound files (left index 0, right index 1)</param>
+    /// <param name="genreName">The name of the spell genre.</param>
+    /// <param name="baseSpell">The name of the spell GameObject prefab.</param>
+    /// <param name="upgrade">The name of the upgraded spell GameObject prefab.</param>
+    /// <param name="right">The name of the right drum track permutation GameObject prefab.</param>
+    /// <param name="left">The name of the left drum track permutation GameObject prefab.</param>
+    public Spell(string[] leadSnippets, string bassIntro, string[] drumIntros, string leadName, string bassName, string[] drumNames, string genreName, string baseSpell, string upgrade, string right, string left)
+    {
+        //setting up the components to each song piece 
+        castingComponents = new Dictionary<string, string[]>
+        {
+            ["lead"] = leadSnippets,
+            ["bass"] = new string[] { bassIntro },
+            ["drums"] = drumIntros
+        };
+
+        songComponents = new Dictionary<string, string[]>
+        {
+            ["lead"] = new string[] { leadName },
+            ["bass"] = new string[] { bassName },
+            ["drums"] = drumNames
+        };
+
+
+        genre = genreName;
+
+        baseSpellObj = Resources.Load<GameObject>("Prefabs\\" + baseSpell);
+        upgSpellObj = Resources.Load<GameObject>("Prefabs\\" + upgrade);
+        rightPermutationObj = Resources.Load<GameObject>("Prefabs\\" + right);
+        leftPermutationObj = Resources.Load<GameObject>("Prefabs\\" + left);
+        level = 1;
+        alignment = "None";
+    }
+
+    /// <summary>
+    /// returns the songs genre
+    /// </summary>
+    /// <returns></returns>
+    public string GetGenre()
+    {
+        return genre;
+    }
+
+    /// <summary>
+    /// called when the spell is being leveled up
+    /// </summary>
+    public void LevelUp(string align = "None")
+    {
+        if (level == 1)
+            level++;
+        else if (level == 2)
+        {
+            level++;
+            alignment = align;
+        }
+        else
+            Debug.Log("The spell is at max level. Could not level up any more");
+    }
+
+}
+
+
+
 public class MusicEngine : MonoBehaviour
 {
-    public int bpm;
     public Note root;
     Queue<Note> sequence;
-    public Instrument lead;
+    Instrument lead, bass, drums;
     bool playingSequence;
-    string[] possibleScales;
-
-    int counter; //DELETE ME
-    public float disjunctivity;
-    public float probabilityOfRest;
 
     //Singleton Setup
     public static MusicEngine Instance { get; private set; }
@@ -324,18 +395,15 @@ public class MusicEngine : MonoBehaviour
         }
     }
 
+
     // Start is called before the first frame update
+    // Variable initialization / First time setup
     void Start()
     {
         playingSequence = false;
-        lead = GameObject.Find("Lead Instrument").GetComponent<Instrument>();
-
-        possibleScales = new string[] { "C1", "C1#", "D1", "D1#", "E1", "F1", "F1#", "G1", "G1#", "A2", "A2#", "B2", "C2" };
-
-        counter = 0; //DELETE ME
-        disjunctivity = 5f;
-        probabilityOfRest = 0;
-
+        lead = GameObject.Find("Lead").GetComponent<Instrument>();
+        bass = GameObject.Find("Middle Layer").GetComponent<Instrument>();
+        drums = GameObject.Find("Drum Layer").GetComponent<Instrument>();
 
     }
 
@@ -352,6 +420,31 @@ public class MusicEngine : MonoBehaviour
         {
             playingSequence = true;
         }
+    }
+
+
+    /// <summary>
+    /// Plays a triple layered segment of music. The default will only require a lead clip to play.
+    /// If the bassName or drumName parameters are set, they will accompany the lead part during playback.
+    /// </summary>
+    /// <param name="leadName">The name of the audio file in the Resources\Audio directory without extension.</param>
+    /// <param name="bassName">An optional parameter for a filename of the bass line/ chords.</param>
+    /// <param name="drumName">An optional parameter for a filename of the drum track.</param>
+    public void PlayLayeredSegment(string leadName, string bassName = "None", string drumName = "None")
+    {
+        //Playback Setup
+        lead.SetSound(leadName);
+        if (bassName != "None")
+            bass.SetSound(bassName);
+        if (drumName != "None")
+            drums.SetSound(drumName);
+
+        //Trigger playback
+        lead.Play();
+        if (bassName != "None")
+            bass.Play();
+        if (drumName != "None")
+            drums.Play();
     }
 
 
@@ -382,23 +475,6 @@ public class MusicEngine : MonoBehaviour
             {
                 lead.Play(sequence.Dequeue());
             }
-        }
-
-        //Scale Test Code: DELETE
-        if(Input.GetKeyUp(KeyCode.W))
-        {
-            counter = System.Math.Min(counter + 1, possibleScales.Length - 1);
-        }
-        if(Input.GetKeyUp(KeyCode.S))
-        {
-            counter = System.Math.Max(counter - 1, 0);
-        }
-        if(Input.GetKeyUp(KeyCode.Space))
-        {
-            var melody = new RandomMelody(possibleScales[counter], probabilityOfRest, disjunctivity, 120, 8).melody.ToArray();
-            
-
-            PlaySequence(new Queue<Note>(melody));
         }
 
 
