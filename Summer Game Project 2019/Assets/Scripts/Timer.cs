@@ -8,7 +8,7 @@ public class Timer : MonoBehaviour
     public float duration { get; set; }
     public bool isDone { get; protected set; }
     bool isCounting = false;
-    float counter;
+    public float count;
 
 
     /// <summary>
@@ -20,25 +20,25 @@ public class Timer : MonoBehaviour
         if(dur > 0.0f)
         {
             duration = dur;
-            counter = duration;
+            count = duration;
             isCounting = true;
             //Debug.Log("Timer is starting with a duration of " + duration.ToString());
         }
         else
         {
-            Debug.Log("ERROR: Counter set to a time less than or equal to 0 seconds");
+            Debug.Log("ERROR: count set to a time less than or equal to 0 seconds");
         }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if(counter > 0.0f && isCounting == true)
+        if(count > 0.0f && isCounting == true)
         {
-            counter -= Time.deltaTime;
-            //Debug.Log(counter.ToString());
+            count -= Time.deltaTime;
+            //Debug.Log(count.ToString());
         }
-        else if (counter <= 0.0f && isCounting == true)
+        else if (count <= 0.0f && isCounting == true)
         {
             Debug.Log("Timer Finished");
             isCounting = false;
@@ -52,7 +52,7 @@ public class Timer : MonoBehaviour
     /// <returns>true if finished and false if still counting</returns>
     public bool FinishCount()
     {
-        if (counter > 0.0f)
+        if (count > 0.0f)
         {
             return false;
         }

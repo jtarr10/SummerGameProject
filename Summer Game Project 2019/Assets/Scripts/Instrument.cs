@@ -79,6 +79,8 @@ public class Instrument : MonoBehaviour
     void Update()
     {
         output.pitch = pitchModifier;
+        if(!timer.FinishCount())
+            setVolume((timer.count) / timer.duration);
 
 
         //finishing note when the timer is done
