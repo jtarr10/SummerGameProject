@@ -1,0 +1,16 @@
+{
+  "source": "Unity",
+  "applications": [
+    {
+      "app_key": "application.generated.unity.summergameproject2019.exe",
+      "launch_type": "url",
+      "url": "steam://launch/",
+      "action_manifest_path": "C:\\Users\\Viele Kartoffeln\\Documents\\GitHub\\SummerGameProject\\Summer Game Project 2019\\Assets\\StreamingAssets\\SteamVR\\actions.json",
+      "strings": {
+        "en_us": {
+          "name": "Summer Game Project 2019 [Testing]"
+        }
+      }
+    }
+  ]
+}
